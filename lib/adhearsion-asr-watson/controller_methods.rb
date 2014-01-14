@@ -49,16 +49,19 @@ module AdhearsionASR::Watson
       # Allow masking sounds while ASR is processing
       yield if block_given?
 
-      # TODO: Map this into a Response object
       begin
         interpretation = listener.value(options[:timeout])
         logger.trace "Result from AT&T Watson: #{interpretation.inspect}"
         if interpretation.recognition.status == 'OK' && interpretation.recognition.n_best.confidence >= options[:min_confidence]
-          interpretation.recognition.n_best.result_text
+          result = create_result(interpretation.recognition.n_best.result_text)
+          result.status = :match
+          result.confidence = interpretation.recognition.n_best.confidence
+          result
+        else
+          create_nomatch
         end
       rescue Celluloid::TimeoutError
-        # TODO return a no-match response
-        return nil
+        create_nomatch
       end
     end
 
@@ -69,6 +72,20 @@ module AdhearsionASR::Watson
         min_confidence: Plugin.config.min_confidence,
         language: Plugin.config.input_language
       }
+    end
+
+    def create_result(text)
+      AdhearsionASR::Result.new.tap do |result|
+        result.mode           = :voice
+        result.utterance      = text
+        result.interpretation = text
+      end
+    end
+
+    def create_nomatch
+      result = create_result nil
+      result.status = :nomatch
+      result
     end
   end
 end
