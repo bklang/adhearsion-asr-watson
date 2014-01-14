@@ -15,8 +15,7 @@ module AdhearsionASR::Watson
         ::Adhearsion::CallController.mixin ::AdhearsionASR::Watson::ControllerMethods
       end
 
-      ATTSpeech.supervise_as :att_speech, config[:api_key], config[:api_secret], 'SPEECH'
-      #ATTSpeech.supervise_as :att_tts, config[:api_key], config[:api_secret], 'TTS'
+      ATTSpeech.supervise_as :att_speech, config[:api_key], config[:api_secret]
 
     end
   end
