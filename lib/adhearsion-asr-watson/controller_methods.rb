@@ -44,7 +44,7 @@ module AdhearsionASR::Watson
 
       recording = record(start_beep: false, initial_timeout: 4.seconds, final_timeout: 1.seconds, format: 'wav', direction: :send).complete_event.recording
       # TODO: Make this work when Adhearsion isn't running on the same server as the telephony engine
-      listener = Celluloid::Actor[:att_speech].future.speech_to_text File.read(recording.uri.sub('file://', ''))
+      listener = Celluloid::Actor[:att_speech].future.speech_to_text File.read(recording.uri.sub('file://', '')), 'audio/wav', 'Generic', grammar: grammar
 
       # Allow masking sounds while ASR is processing
       yield if block_given?
