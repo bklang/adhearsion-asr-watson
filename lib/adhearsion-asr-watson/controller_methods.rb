@@ -40,7 +40,15 @@ module AdhearsionASR::Watson
 
       output_document = prompts.empty? ? nil : output_formatter.ssml_for_collection(prompts)
 
+      execute_prompt output_document, grammars, options
+    end
+
+    def execute_prompt(output_document, grammars, options)
+      options = default_options.merge(options)
       play output_document if output_document
+
+      # TODO: Support more than one grammar
+      grammar = grammars.first[:value]
 
       recording = record(start_beep: false, initial_timeout: 4.seconds, final_timeout: 1.seconds, format: 'wav', direction: :send).complete_event.recording
       # TODO: Make this work when Adhearsion isn't running on the same server as the telephony engine
@@ -52,7 +60,9 @@ module AdhearsionASR::Watson
       begin
         interpretation = listener.value(options[:timeout])
         logger.trace "Result from AT&T Watson: #{interpretation.inspect}"
-        if interpretation.recognition.status == 'OK' && interpretation.recognition.n_best.confidence >= options[:min_confidence]
+        if interpretation.error_message
+          create_nomatch
+        elsif interpretation.recognition.status == 'OK' && interpretation.recognition.n_best.confidence >= options[:min_confidence]
           result = create_result(interpretation.recognition.n_best.result_text)
           result.status = :match
           result.confidence = interpretation.recognition.n_best.confidence
