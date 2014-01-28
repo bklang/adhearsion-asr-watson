@@ -40,7 +40,12 @@ module AdhearsionASR::Watson
 
       output_document = prompts.empty? ? nil : output_formatter.ssml_for_collection(prompts)
 
-      execute_prompt output_document, grammars, options
+      if grammars.first[:value].mode == :speech
+        # Only attempt to handle speech grammars, not DTMF
+        execute_prompt output_document, grammars, options
+      else
+        super *args
+      end
     end
 
     def execute_prompt(output_document, grammars, options)
