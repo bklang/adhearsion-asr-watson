@@ -30,6 +30,7 @@ module AdhearsionASR::Watson
     # @see http://rdoc.info/gems/punchblock/Punchblock/Component/Output.new Punchblock::Component::Output.new
     #
     def ask(*args)
+      orig_args = args.dup
       options = args.last.kind_of?(Hash) ? args.pop : {}
       options = default_options.merge(options)
       prompts = args.flatten
@@ -44,7 +45,7 @@ module AdhearsionASR::Watson
         # Only attempt to handle speech grammars, not DTMF
         execute_prompt output_document, grammars, options
       else
-        super *args
+        super *orig_args
       end
     end
 
