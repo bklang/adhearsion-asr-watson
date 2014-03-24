@@ -65,7 +65,8 @@ module AdhearsionASR::Watson
       begin
         interpretation = listener.value(options[:timeout])
         logger.trace "Result from AT&T Watson: #{interpretation.inspect}"
-        if interpretation.error_message
+        if interpretation.error_message || interpretation.request_error
+          logger.error "Watson API returned an error: #{interpretation.error_message || interpretation.request_error.service_exception.text}"
           create_nomatch
         elsif interpretation.recognition.status == 'OK' && interpretation.recognition.n_best.confidence >= options[:min_confidence]
           result = create_result(interpretation.recognition.n_best.result_text)
@@ -75,6 +76,11 @@ module AdhearsionASR::Watson
         else
           create_nomatch
         end
+      rescue NoMethodError
+        # This is a catch-all in case one of the accessors into the AT&T response is a nil, causing a NoMethodError on that object.
+        # Dirty, but at least we should log the reason this way.
+        logger.error interpretation.inspect
+        create_nomatch
       rescue Celluloid::TimeoutError
         create_nomatch
       end
