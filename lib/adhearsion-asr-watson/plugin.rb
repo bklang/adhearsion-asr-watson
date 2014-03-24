@@ -1,4 +1,6 @@
 # encoding: utf-8
+require 'att_speech'
+
 module AdhearsionASR::Watson
   class Plugin < Adhearsion::Plugin
     config :adhearsion_asr_watson do
