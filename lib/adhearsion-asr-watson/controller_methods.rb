@@ -69,10 +69,13 @@ module AdhearsionASR::Watson
           logger.error "Watson API returned an error: #{interpretation.error_message || interpretation.request_error.service_exception.text}"
           create_nomatch
         elsif interpretation.recognition.status == 'OK' && interpretation.recognition.n_best.confidence >= options[:min_confidence]
-          result = create_result(interpretation.recognition.n_best.result_text)
+          # FIXME: Should min_confidence be replaced with :grade? grade="accept"
+          result = create_result interpretation.recognition
           result.status = :match
           result.confidence = interpretation.recognition.n_best.confidence
           result
+        elsif interpretation.recognition.status == 'Speech Not Recognized'
+          create_nomatch
         else
           create_nomatch
         end
@@ -95,18 +98,38 @@ module AdhearsionASR::Watson
       }
     end
 
-    def create_result(text)
+    def create_result(recognition)
+      text = recognition.n_best.result_text
+      confidence = recognition.n_best.confidence
+      grammar_id = 'http://grammar' # FIXME
+      nlsml = RubySpeech::NLSML.draw grammar: grammar_id do
+        interpretation confidence: confidence do
+          if recognition.n_best.has_key? 'nlu_hypothesis'
+            input text, mode: :voice
+            instance do
+              recognition.n_best.nlu_hypothesis.out.keys.each do |key|
+                send key, recognition.n_best.nlu_hypothesis.out[key].to_s
+              end
+            end
+          end
+        end
+      end
+
       AdhearsionASR::Result.new.tap do |result|
         result.mode           = :voice
+        result.status         = :match
         result.utterance      = text
         result.interpretation = text
+        # Extra parse step below is required pending https://github.com/benlangfeld/ruby_speech/issues/22
+        result.nlsml          = RubySpeech::NLSML::Document.new nlsml
       end
     end
 
     def create_nomatch
-      result = create_result nil
-      result.status = :nomatch
-      result
+      AdhearsionASR::Result.new.tap do |result|
+        result.mode   = :voice
+        result.status = :nomatch
+      end
     end
   end
 end
