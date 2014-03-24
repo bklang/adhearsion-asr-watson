@@ -33,7 +33,7 @@ module AdhearsionASR::Watson
       orig_args = args.dup
       options = args.last.kind_of?(Hash) ? args.pop : {}
       options = default_options.merge(options)
-      prompts = args.flatten
+      prompts = args.flatten.compact
 
       options[:timeout] || options[:limit] || options[:terminator] || raise(ArgumentError, "You must specify at least one of limit, terminator or timeout")
 
