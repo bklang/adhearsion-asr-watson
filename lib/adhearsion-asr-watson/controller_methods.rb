@@ -40,8 +40,7 @@ module AdhearsionASR::Watson
       grammars = AdhearsionASR::AskGrammarBuilder.new(options).grammars
 
       output_document = prompts.empty? ? nil : output_formatter.ssml_for_collection(prompts)
-
-      if grammars.first[:value].mode == :voice
+      if options[:mode] == :voice
         # AT&T Watson should only be used for voice grammars
         execute_prompt output_document, grammars, options
       else
