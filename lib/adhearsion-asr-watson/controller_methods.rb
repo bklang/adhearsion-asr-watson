@@ -41,8 +41,8 @@ module AdhearsionASR::Watson
 
       output_document = prompts.empty? ? nil : output_formatter.ssml_for_collection(prompts)
 
-      if grammars.first[:value].mode == :speech
-        # Only attempt to handle speech grammars, not DTMF
+      if grammars.first[:value].mode == :voice
+        # AT&T Watson should only be used for voice grammars
         execute_prompt output_document, grammars, options
       else
         super *orig_args
